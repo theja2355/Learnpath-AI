@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnPath AI — Smart MOOCs & Internship Recommender</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b12;--bg2:#0d1117;--surface:rgba(255,255,255,0.04);--surface2:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --primary:#6c63ff;--primary-glow:rgba(108,99,255,0.35);
+  --pink:#f059da;--cyan:#00d4ff;--green:#00e5a0;--error:#ff5a5a;
+  --text:#f0f2f8;--muted:#7a849a;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);overflow-x:hidden;min-height:100vh;}
+.blob{position:fixed;border-radius:50%;filter:blur(120px);z-index:0;pointer-events:none;animation:drift 18s ease-in-out infinite alternate;}
+.b1{width:500px;height:500px;background:var(--primary);top:-15%;left:-10%;opacity:0.18;}
+.b2{width:380px;height:380px;background:var(--pink);bottom:-10%;right:-8%;opacity:0.14;animation-delay:-6s;}
+.b3{width:280px;height:280px;background:var(--cyan);top:45%;left:50%;opacity:0.1;animation-delay:-12s;}
+@keyframes drift{0%{transform:translate(0,0) scale(1);}100%{transform:translate(40px,60px) scale(1.15);}}
+.view{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;}
+.view.active{display:flex;animation:fadeUp 0.4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 5%;background:rgba(8,11,18,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);z-index:100;}
+.logo{font-family:var(--font-h);font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--primary),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer;}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-weight:500;font-size:0.9rem;cursor:pointer;transition:color 0.2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-right{display:flex;gap:0.75rem;align-items:center;}
+#nav-user{display:none;align-items:center;gap:0.75rem;}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--pink));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:#fff;}
+#nav-name{font-weight:600;font-size:0.9rem;}
+
+/* BUTTONS */
+.btn{padding:0.65rem 1.4rem;border-radius:var(--r);font-family:var(--font-b);font-weight:600;font-size:0.9rem;cursor:pointer;border:none;transition:all 0.25s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--pink));color:#fff !important;box-shadow:0 4px 20px var(--primary-glow);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px var(--primary-glow);}
+.btn-primary:disabled{opacity:0.6;transform:none;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text) !important;border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);}
+.btn-green{background:linear-gradient(135deg,#00e5a0,#00b4d8);color:#080b12 !important;box-shadow:0 4px 16px rgba(0,229,160,0.3);}
+.btn-green:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,229,160,0.4);}
+.btn-sm{padding:0.45rem 1rem;font-size:0.82rem;}
+.glass{background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--r);}
+
+/* AUTH */
+.auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6rem 1rem 3rem;}
+.auth-card{width:100%;max-width:440px;padding:2.75rem 2.5rem;border-radius:20px;}
+.auth-brand{text-align:center;margin-bottom:1.75rem;}
+.auth-brand .logo-big{font-family:var(--font-h);font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--primary),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.auth-brand p{color:var(--muted);font-size:0.88rem;margin-top:0.25rem;}
+.auth-card h2{font-family:var(--font-h);font-size:1.8rem;font-weight:700;margin-bottom:0.35rem;}
+.auth-card .sub{color:var(--muted);font-size:0.9rem;margin-bottom:1.75rem;}
+.fg{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1.2rem;}
+.fg label{font-size:0.8rem;color:var(--muted);font-weight:500;letter-spacing:0.02em;}
+.fg input{background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:0.85rem 1rem;font-family:var(--font-b);font-size:0.95rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.fg input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.fg input::placeholder{color:var(--muted);}
+.auth-card .btn-primary{width:100%;padding:0.85rem;margin-top:0.25rem;font-size:1rem;}
+.link-row{text-align:center;margin-top:1.4rem;color:var(--muted);font-size:0.88rem;}
+.link-row a{color:var(--primary);cursor:pointer;font-weight:600;text-decoration:none;}
+.link-row a:hover{text-decoration:underline;}
+.err{background:rgba(255,90,90,0.1);border:1px solid rgba(255,90,90,0.3);color:var(--error);padding:0.65rem 1rem;border-radius:8px;font-size:0.87rem;margin-bottom:1rem;display:none;}
+.suc{background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--green);padding:0.65rem 1rem;border-radius:8px;font-size:0.87rem;margin-bottom:1rem;display:none;}
+
+/* HOME */
+.home-main{flex:1;padding-top:72px;}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:3rem;padding:5rem 5% 3rem;align-items:center;}
+.badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.28);border-radius:20px;font-size:0.78rem;font-weight:700;color:var(--primary);margin-bottom:1.25rem;letter-spacing:0.04em;}
+.hero-title{font-family:var(--font-h);font-size:3.4rem;font-weight:800;line-height:1.1;margin-bottom:1.25rem;}
+.grad{background:linear-gradient(135deg,var(--cyan),var(--primary),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{color:var(--muted);font-size:1.02rem;line-height:1.75;margin-bottom:2rem;max-width:480px;}
+.search-card{padding:1.75rem;border-radius:18px;border:1px solid var(--border2);}
+.search-card .fg{margin-bottom:1rem;}
+.search-card .btn-primary{width:100%;padding:0.9rem;font-size:1rem;}
+.hero-visual{display:flex;flex-direction:column;gap:1.25rem;}
+.vc{padding:1.25rem 1.5rem;border-radius:16px;border:1px solid var(--border2);animation:float 6s ease-in-out infinite;}
+.vc:nth-child(2){animation-delay:2s;margin-left:2rem;}
+.vc:nth-child(3){animation-delay:4s;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.vc-icon{font-size:1.5rem;margin-bottom:0.45rem;}
+.vc-title{font-family:var(--font-h);font-weight:700;font-size:0.95rem;margin-bottom:0.2rem;}
+.vc-sub{color:var(--muted);font-size:0.8rem;}
+
+/* RESULTS */
+.results-section{padding:3rem 5%;display:none;}
+.results-section.show{display:block;animation:fadeUp 0.4s ease;}
+.sec-title{font-family:var(--font-h);font-size:2rem;font-weight:700;text-align:center;margin-bottom:0.5rem;}
+.sec-sub{color:var(--muted);text-align:center;margin-bottom:2.5rem;font-size:0.95rem;}
+.tabs{display:flex;justify-content:center;gap:0.75rem;margin-bottom:2.5rem;}
+.tab-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.6rem 1.75rem;border-radius:30px;cursor:pointer;font-family:var(--font-h);font-weight:600;font-size:0.87rem;transition:all 0.25s;}
+.tab-btn.active,.tab-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--primary);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fadeUp 0.3s ease;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;}
+.loader{display:none;text-align:center;padding:3rem;color:var(--muted);}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* CARDS */
+.card{border:1px solid var(--border);border-radius:18px;padding:1.5rem;background:var(--surface);transition:all 0.25s;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--cyan));opacity:0;transition:opacity 0.25s;}
+.card:hover{transform:translateY(-5px);border-color:rgba(108,99,255,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.35);}
+.card:hover::after{opacity:1;}
+.chip{display:inline-flex;align-items:center;font-size:0.7rem;font-weight:700;padding:0.25rem 0.65rem;border-radius:10px;background:rgba(108,99,255,0.18);color:var(--primary);margin-bottom:0.75rem;width:fit-content;}
+.card h3{font-family:var(--font-h);font-size:1.05rem;font-weight:700;margin-bottom:0.4rem;line-height:1.3;}
+.card .prov{color:var(--muted);font-size:0.82rem;margin-bottom:0.75rem;}
+.card-meta{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;}
+.card-meta span{font-size:0.8rem;color:var(--muted);background:var(--surface2);padding:0.25rem 0.6rem;border-radius:8px;}
+.card-desc{font-size:0.83rem;color:var(--muted);line-height:1.5;margin-bottom:1.25rem;flex:1;}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:0.75rem;margin-top:auto;}
+.match{display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:0.88rem;}
+.ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0;}
+
+footer{padding:1.5rem 5%;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:0.82rem;position:relative;z-index:1;margin-top:2rem;}
+
+/* RESUME PAGE */
+.drop-zone{border:2px dashed var(--border2);border-radius:12px;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:border-color 0.25s;}
+.drop-zone:hover{border-color:var(--primary);}
+
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr;}
+  .hero-visual{display:none;}
+  .hero-title{font-size:2.2rem;}
+  .nav-links{display:none;}
+  .card-foot{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="goHome()">LearnPath AI</div>
+  <ul class="nav-links">
+    <li><a onclick="goHome()">Home</a></li>
+    <li><a onclick="scrollResults()">Discover</a></li>
+    <li><a onclick="showView('resume')">Upload Resume</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="nav-user">
+      <div class="avatar" id="nav-av">U</div>
+      <span id="nav-name"></span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+    <div id="nav-auth">
+      <button class="btn btn-ghost btn-sm" onclick="showView('login')" style="margin-right:0.5rem">Login</button>
+      <button class="btn btn-primary btn-sm" onclick="showView('register')">Sign Up</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="view-login" class="view active">
+  <div class="auth-wrap">
+    <div class="auth-card glass">
+      <div class="auth-brand">
+        <div class="logo-big">LearnPath AI</div>
+        <p>Your AI-powered career accelerator</p>
+      </div>
+      <h2>Welcome back</h2>
+      <p class="sub">Login to continue your learning journey</p>
+      <div class="err" id="l-err"></div>
+      <div class="fg"><label>Email Address</label><input type="email" id="l-email" placeholder="you@example.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+      <button class="btn btn-primary" id="l-btn" onclick="doLogin()">Login</button>
+      <div class="link-row">Don't have an account? <a onclick="showView('register')">Sign Up</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REGISTER ═══ -->
+<div id="view-register" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card glass">
+      <div class="auth-brand">
+        <div class="logo-big">LearnPath AI</div>
+        <p>Join thousands of learners worldwide</p>
+      </div>
+      <h2>Create account</h2>
+      <p class="sub">Start your personalized learning path today</p>
+      <div class="err" id="r-err"></div>
+      <div class="suc" id="r-suc"></div>
+      <div class="fg"><label>Full Name</label><input type="text" id="r-name" placeholder="John Doe"></div>
+      <div class="fg"><label>Email Address</label><input type="email" id="r-email" placeholder="you@example.com"></div>
+      <div class="fg"><label>Password (min. 6 characters)</label><input type="password" id="r-pass" placeholder="••••••••"></div>
+      <button class="btn btn-primary" id="r-btn" onclick="doRegister()">Create Account</button>
+      <div class="link-row">Already have an account? <a onclick="showView('login')">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div id="view-home" class="view">
+  <div class="home-main">
+    <section class="hero">
+      <div>
+        <div class="badge">✨ AI-POWERED RECOMMENDATIONS</div>
+        <h1 class="hero-title">Accelerate Your<br><span class="grad">Tech Career</span></h1>
+        <p class="hero-sub">Enter your skills and target role. Our AI matches you with the best MOOCs and internships — instantly.</p>
+        <div class="search-card glass">
+          <div class="fg">
+            <label>Your Current Skills</label>
+            <input type="text" id="skills" placeholder="e.g. Python, React, Machine Learning">
+          </div>
+          <div class="fg">
+            <label>Target Role</label>
+            <input type="text" id="role" placeholder="e.g. Data Scientist, Frontend Developer">
+          </div>
+          <button class="btn btn-primary" id="search-btn" onclick="doSearch()">
+            Get Recommendations ✦
+          </button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="vc glass">
+          <div class="vc-icon">🚀</div>
+          <div class="vc-title">Top Match</div>
+          <div class="vc-sub">Deep Learning Specialization — 94% match</div>
+        </div>
+        <div class="vc glass">
+          <div class="vc-icon">💼</div>
+          <div class="vc-title">New Opportunity</div>
+          <div class="vc-sub">ML Intern @ Meta — Remote, $5K/mo</div>
+        </div>
+        <div class="vc glass">
+          <div class="vc-icon">🎯</div>
+          <div class="vc-title">Skill Gap Closed</div>
+          <div class="vc-sub">3 courses to reach Senior Data Scientist</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="results-section" id="results">
+      <div class="loader" id="loader"><div class="spinner"></div><p>Analyzing your profile…</p></div>
+      <div id="res-content" style="display:none">
+        <h2 class="sec-title">Your Personalized <span class="grad">Learning Path</span></h2>
+        <p class="sec-sub" id="res-sub"></p>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="courses">📚 Courses</button>
+          <button class="tab-btn" data-tab="internships">💼 Internships</button>
+        </div>
+        <div class="tab-pane active" id="tab-courses"><div class="grid" id="c-grid"></div></div>
+        <div class="tab-pane" id="tab-internships"><div class="grid" id="i-grid"></div></div>
+      </div>
+    </section>
+  </div>
+  <footer>&copy; 2026 LearnPath AI — Smart MOOCs &amp; Internship Recommender</footer>
+</div>
+
+<!-- ═══ RESUME ═══ -->
+<div id="view-resume" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card glass" style="max-width:500px;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:3rem;margin-bottom:0.6rem;">📄</div>
+        <h2 style="font-family:var(--font-h);font-size:1.7rem;margin-bottom:0.35rem;">Upload Resume</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">Let our AI analyze your profile automatically</p>
+      </div>
+      <div class="err" id="rv-err"></div>
+      <div class="suc" id="rv-suc"></div>
+      <div class="drop-zone" onclick="document.getElementById('rf').click()">
+        <input type="file" id="rf" accept=".pdf,.doc,.docx" style="display:none"
+          onchange="document.getElementById('flbl').textContent=this.files[0]?this.files[0].name:'Drag & drop or click to browse'">
+        <div style="font-size:2.5rem;margin-bottom:0.6rem;">☁️</div>
+        <div id="flbl" style="color:var(--muted);font-weight:500;font-size:0.9rem;">Drag &amp; drop or click to browse</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.4rem;opacity:0.7;">PDF, DOCX — max 5MB</div>
+      </div>
+      <button class="btn btn-primary" id="rv-btn" onclick="doUpload()" style="width:100%;padding:0.85rem;margin-top:1rem;">Analyze Resume ✨</button>
+      <div class="link-row"><a onclick="showView('home')">← Back to Home</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// API points to same server (relative URL)
+const API = "";
+
+let token    = localStorage.getItem("lp_token") || null;
+let userName = localStorage.getItem("lp_name")  || null;
+
+window.addEventListener("DOMContentLoaded", () => {
+  // If already logged in, go straight to home
+  if (token && userName) {
+    showView("home");
+  }
+  updateNav();
+  setupTabs();
+  document.getElementById("l-pass").addEventListener("keydown",  e => { if(e.key==="Enter") doLogin(); });
+  document.getElementById("r-pass").addEventListener("keydown",  e => { if(e.key==="Enter") doRegister(); });
+  document.getElementById("role").addEventListener("keydown",    e => { if(e.key==="Enter") doSearch(); });
+});
+
+// ── Views ──────────────────────────────────
+function showView(n) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-"+n).classList.add("active");
+  window.scrollTo(0,0);
+}
+function goHome()      { showView("home"); }
+function scrollResults(){
+  showView("home");
+  setTimeout(()=>{ const r=document.getElementById("results"); if(r.classList.contains("show")) r.scrollIntoView({behavior:"smooth"}); },100);
+}
+
+// ── Navbar ──────────────────────────────────
+function updateNav() {
+  if (token && userName) {
+    document.getElementById("nav-auth").style.display = "none";
+    document.getElementById("nav-user").style.display = "flex";
+    document.getElementById("nav-name").textContent   = userName;
+    document.getElementById("nav-av").textContent     = userName.charAt(0).toUpperCase();
+  } else {
+    document.getElementById("nav-auth").style.display = "flex";
+    document.getElementById("nav-user").style.display = "none";
+  }
+}
+function logout() {
+  token = null; userName = null;
+  localStorage.removeItem("lp_token");
+  localStorage.removeItem("lp_name");
+  updateNav();
+  showView("login");
+}
+function saveSession(t, n) {
+  token = t; userName = n;
+  localStorage.setItem("lp_token", t);
+  localStorage.setItem("lp_name",  n);
+  updateNav();
+}
+
+// ── Login ───────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById("l-email").value.trim();
+  const pass  = document.getElementById("l-pass").value;
+  const err   = document.getElementById("l-err");
+  const btn   = document.getElementById("l-btn");
+  err.style.display = "none";
+  if (!email || !pass) { showErr(err,"Please fill in all fields."); return; }
+  btn.disabled=true; btn.textContent="Logging in…";
+  try {
+    const res  = await fetch(`${API}/api/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pass})});
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail||"Login failed."); return; }
+    saveSession(data.token, data.name);
+    showView("home");
+  } catch { showErr(err,"Cannot connect to server. Is the backend running?"); }
+  finally  { btn.disabled=false; btn.textContent="Login"; }
+}
+
+// ── Register ────────────────────────────────
+async function doRegister() {
+  const name  = document.getElementById("r-name").value.trim();
+  const email = document.getElementById("r-email").value.trim();
+  const pass  = document.getElementById("r-pass").value;
+  const err   = document.getElementById("r-err");
+  const suc   = document.getElementById("r-suc");
+  const btn   = document.getElementById("r-btn");
+  err.style.display="none"; suc.style.display="none";
+  if (!name||!email||!pass) { showErr(err,"Please fill in all fields."); return; }
+  if (pass.length<6)        { showErr(err,"Password must be at least 6 characters."); return; }
+  btn.disabled=true; btn.textContent="Creating account…";
+  try {
+    const res  = await fetch(`${API}/api/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,password:pass})});
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail||"Registration failed."); return; }
+    saveSession(data.token, data.name);
+    showView("home");
+  } catch { showErr(err,"Cannot connect to server. Is the backend running?"); }
+  finally  { btn.disabled=false; btn.textContent="Create Account"; }
+}
+
+// ── Search ───────────────────────────────────
+async function doSearch() {
+  const skills = document.getElementById("skills").value.trim();
+  const role   = document.getElementById("role").value.trim();
+  if (!skills||!role) { alert("Please enter your skills and target role."); return; }
+  if (!token)         { alert("Please login first to get recommendations."); showView("login"); return; }
+
+  const rs  = document.getElementById("results");
+  const ld  = document.getElementById("loader");
+  const rc  = document.getElementById("res-content");
+  const btn = document.getElementById("search-btn");
+
+  rs.classList.add("show");
+  ld.style.display="block"; rc.style.display="none";
+  btn.disabled=true; btn.textContent="Analyzing… ⚙️";
+  rs.scrollIntoView({behavior:"smooth"});
+
+  try {
+    const res  = await fetch(`${API}/api/recommend`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body:JSON.stringify({skills,role})
+    });
+    if (res.status===401) { logout(); alert("Session expired. Please login again."); return; }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail||"Server error");
+
+    ld.style.display="none"; rc.style.display="block";
+    document.getElementById("res-sub").textContent = `Top matches for "${skills}" → "${role}"`;
+    renderCourses(data.courses);
+    renderInterns(data.internships);
+  } catch(e) {
+    ld.style.display="none"; rc.style.display="block";
+    document.getElementById("c-grid").innerHTML=
+      `<p style="color:var(--error);padding:1rem;grid-column:1/-1">❌ ${e.message}</p>`;
+    document.getElementById("i-grid").innerHTML="";
+  } finally {
+    btn.disabled=false; btn.textContent="Get Recommendations ✦";
+  }
+}
+
+// ── Card Renderers ───────────────────────────
+function mc(p){ return p>=70?"#00e5a0":p>=40?"#6c63ff":"#f059da"; }
+
+function renderCourses(list) {
+  const g = document.getElementById("c-grid");
+  if (!list||!list.length) { g.innerHTML=`<p style="color:var(--muted);padding:1rem">No courses found for your profile.</p>`; return; }
+  g.innerHTML = list.map(c => {
+    const tag = c.tags ? c.tags.split(/[\s,]+/)[0] : "Course";
+    const col = mc(c.match);
+    const url = c.url || "#";
+    return `
+    <div class="card">
+      <div class="chip">📚 ${tag}</div>
+      <h3>${c.title}</h3>
+      <div class="prov">🎓 ${c.provider||""}</div>
+      <div class="card-meta">
+        <span>⏳ ${c.duration||"N/A"}</span>
+        <span>📈 ${c.level||"N/A"}</span>
+      </div>
+      <p class="card-desc">${c.description||""}</p>
+      <div class="card-foot">
+        <div class="match" style="color:${col}">
+          <div class="ring" style="background:conic-gradient(${col} ${c.match}%,rgba(255,255,255,0.06) 0);color:${col}">${c.match}%</div>
+          Match
+        </div>
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn btn-green btn-sm">
+          Enroll Now →
+        </a>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderInterns(list) {
+  const g = document.getElementById("i-grid");
+  if (!list||!list.length) { g.innerHTML=`<p style="color:var(--muted);padding:1rem">No internships found for your profile.</p>`; return; }
+  g.innerHTML = list.map(i => {
+    const tag = i.tags ? i.tags.split(/[\s,]+/)[0] : "Intern";
+    const col = mc(i.match);
+    const url = i.url || "https://www.linkedin.com/jobs/internship-jobs/";
+    return `
+    <div class="card">
+      <div class="chip">💼 ${tag}</div>
+      <h3>${i.title}</h3>
+      <div class="prov">🏢 ${i.company||""}</div>
+      <div class="card-meta">
+        <span>📍 ${i.location||"N/A"}</span>
+        <span>💰 ${i.stipend||"N/A"}</span>
+      </div>
+      <p class="card-desc">${i.description||""}</p>
+      <div class="card-foot">
+        <div class="match" style="color:${col}">
+          <div class="ring" style="background:conic-gradient(${col} ${i.match}%,rgba(255,255,255,0.06) 0);color:${col}">${i.match}%</div>
+          Match
+        </div>
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+          Apply on LinkedIn →
+        </a>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ── Resume Upload ────────────────────────────
+async function doUpload() {
+  const fi  = document.getElementById("rf");
+  const err = document.getElementById("rv-err");
+  const suc = document.getElementById("rv-suc");
+  const btn = document.getElementById("rv-btn");
+  err.style.display="none"; suc.style.display="none";
+  if (!token)        { showErr(err,"Please login first."); showView("login"); return; }
+  if (!fi.files[0])  { showErr(err,"Please select a file."); return; }
+  btn.disabled=true; btn.textContent="Analyzing… ⚙️";
+  try {
+    const fd = new FormData(); fd.append("resume", fi.files[0]);
+    const res  = await fetch(`${API}/api/upload-resume`,{method:"POST",headers:{"Authorization":"Bearer "+token},body:fd});
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail||"Upload failed."); return; }
+    document.getElementById("skills").value = data.extracted_skills;
+    document.getElementById("role").value   = data.inferred_role;
+    suc.textContent = `✅ Skills: ${data.extracted_skills} | Role: ${data.inferred_role}`;
+    suc.style.display = "block";
+    setTimeout(()=>showView("home"), 1800);
+  } catch { showErr(err,"Cannot connect to server."); }
+  finally  { btn.disabled=false; btn.textContent="Analyze Resume ✨"; }
+}
+
+// ── Tabs ─────────────────────────────────────
+function setupTabs() {
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-"+tab).classList.add("active");
+    });
+  });
+}
+
+function showErr(el, msg){ el.textContent=msg; el.style.display="block"; }
+</script>
+</body>
+</html>
